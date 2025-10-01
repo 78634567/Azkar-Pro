@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AzkarPro - Digital Dhikr Counter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Noto+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📿</text></svg>">
+    <style>
+        :root {
+            --primary: #0D7377;
+            --secondary: #FFD700;
+            --accent: #4A90A4;
+            --bg-light: #FAFAFA;
+            --bg-dark: #1A202C;
+            --text-light: #333333;
+            --text-dark: #E2E8F0;
+            --card-light: #FFFFFF;
+            --card-dark: #2D3748;
+            --success: #48BB78;
+            --warning: #ECC94B;
+            --error: #F56565;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .header-actions button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Main Content Area */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 4rem; /* Space for bottom nav */
+        }
+
+        .screen {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Counter Screen */
+        .counter-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .dhikr-display {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background-color: var(--card-light);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        body.dark-mode .dhikr-display {
+            background-color: var(--card-dark);
+        }
+
+        .dhikr-arabic {
+            font-family: 'Amiri', serif;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        .dhikr-translation {
+            font-size: 1rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        body.dark-mode .dhikr-translation {
+            color: var(--text-dark);
+        }
+
+        .counter-display {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .counter-circle {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(13, 115, 119, 0.3);
+            user-select: none;
+            transition: transform 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counter-circle:active {
+            transform: scale(0.95);
+        }
+
+        .counter-circle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 30%, rgba(255, 255, 255, 0.2) 100%);
+            border-radius: 50%;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 300px;
+            height: 300px;
+        }
+
+        .counter-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        body.dark-mode .btn-outline {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Library Screen */
+        .library-container {
+            padding: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-size: 1rem;
+            background-color: var(--card-light);
+            color: var(--text-light);
+        }
+
+        body.dark-mode .search-bar input {
+            background-color: var(--card-dark);
+            border-color: #4A5568;
+            color: var(--text-dark);
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718096;
+        }
+
+        .category-chips {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .category-chips::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            padding: 0.5rem 1rem;
+            background-color: var(--card-light);
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        body.dark-mode .chip {
+            background-color: var(--card-dark);
+            border-color: #4A5568;
+        }
+
+        .chip.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .azkar-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .azkar-card {
+            background-color: var(--card-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        body.dark-mode .azkar-card {
+            background-color: var(--card-dark);
+        }
+
+        .azkar-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .azkar-card-arabic {
+            font-family: 'Amiri', serif;
+            font-size: 1.5rem;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .azkar-card-translation {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+
+        body.dark-mode .azkar-card-translation {
+            color: var(--text-dark);
+        }
+
+        .azkar-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recommended-count {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        body.dark-mode .recommended-count {
+            color: var(--accent);
+        }
+
+        /* Progress Screen */
+        .progress-container {
+            padding: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .stat-card {
+            background-color: var(--card-dark);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        body.dark-mode .stat-value {
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .progress-chart {
+            background-color: var(--card-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .progress-chart {
+            background-color: var(--card-dark);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-weight: 600;
+        }
+
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+
+        .achievements {
+            background-color: var(--card-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .achievements {
+            background-color: var(--card-dark);
+        }
+
+        .achievements-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .badges-container {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+        }
+
+        .badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .badge-name {
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        /* Profile Screen */
+        .profile-container {
+            padding: 1rem;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .profile-info h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-section {
+            background-color: var(--card-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .profile-section {
+            background-color: var(--card-dark);
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .achievement-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-light);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.8rem 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        body.dark-mode .bottom-nav {
+            background-color: var(--card-dark);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .nav-item.active {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        body.dark-mode .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        .nav-label {
+            font-size: 0.7rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--card-light);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .modal-content {
+            background-color: var(--card-dark);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        body.dark-mode .close-modal {
+            color: var(--text-dark);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        body.dark-mode .setting-item {
+            border-bottom-color: #4A5568;
+        }
+
+        .setting-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .setting-title {
+            font-weight: 500;
+        }
+
+        .setting-desc {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Celebration Animation */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+
+        .celebration.active {
+            display: flex;
+        }
+
+        .celebration i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .celebration h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 500px;
+                margin: 0 auto;
+                border-left: 1px solid #E2E8F0;
+                border-right: 1px solid #E2E8F0;
+            }
+            
+            body.dark-mode .container {
+                border-left-color: #4A5568;
+                border-right-color: #4A5568;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-pray"></i>
+                <span>AzkarPro</span>
+            </div>
+            <div class="header-actions">
+                <button id="theme-toggle"><i class="fas fa-moon"></i></button>
+                <button id="settings-toggle"><i class="fas fa-cog"></i></button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Counter Screen -->
+            <div id="counter-screen" class="screen active">
+                <div class="counter-container">
+                    <div class="dhikr-display">
+                        <div class="dhikr-arabic">سُبْحَانَ اللَّهِ</div>
+                        <div class="dhikr-translation">Glory be to Allah</div>
+                    </div>
+                    
+                    <div class="counter-display">
+                        <div class="counter-circle" id="counter-btn">
+                            <span id="count">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="counter-actions">
+                        <button class="btn btn-outline" id="reset-btn">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                        <button class="btn btn-primary" id="change-dhikr-btn">
+                            <i class="fas fa-book"></i> Change Dhikr
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Library Screen -->
+            <div id="library-screen" class="screen">
+                <div class="library-container">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search azkar...">
+                    </div>
+                    
+                    <div class="category-chips">
+                        <div class="chip active">All</div>
+                        <div class="chip">Morning</div>
+                        <div class="chip">Evening</div>
+                        <div class="chip">After Prayer</div>
+                        <div class="chip">Sleep</div>
+                        <div class="chip">General</div>
+                    </div>
+                    
+                    <div class="azkar-list">
+                        <!-- Azkar cards will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Screen -->
+            <div id="progress-screen" class="screen">
+                <div class="progress-container">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="today-count">0</div>
+                            <div class="stat-label">Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="streak-count">0</div>
+                            <div class="stat-label">Day Streak</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-count">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="goal-progress">0%</div>
+                            <div class="stat-label">Goal Progress</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-chart">
+                        <div class="chart-header">
+                            <div class="chart-title">Weekly Progress</div>
+                            <div class="chart-actions">
+                                <button class="btn btn-outline">View All</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="progress-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="achievements">
+                        <div class="achievements-title">Achievements</div>
+                        <div class="badges-container">
+                            <!-- Badges will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Screen -->
+            <div id="profile-screen" class="screen">
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="profile-info">
+                            <h2>Guest User</h2>
+                            <p>Member since June 2023</p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">1,247</div>
+                            <div class="stat-label">Total Dhikr</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">7</div>
+                            <div class="stat-label">Day Streak</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <div class="section-title">
+                            <span>Recent Activity</span>
+                            <button class="btn btn-outline">View All</button>
+                        </div>
+                        <!-- Activity list will be populated by JavaScript -->
+                    </div>
+                    
+                    <div class="profile-section">
+                        <div class="section-title">Achievements</div>
+                        <div class="achievement-list">
+                            <!-- Achievements will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-screen="counter-screen">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-label">Home</span>
+            </div>
+            <div class="nav-item" data-screen="library-screen">
+                <i class="fas fa-book nav-icon"></i>
+                <span class="nav-label">Library</span>
+            </div>
+            <div class="nav-item" data-screen="progress-screen">
+                <i class="fas fa-chart-line nav-icon"></i>
+                <span class="nav-label">Progress</span>
+            </div>
+            <div class="nav-item" data-screen="profile-screen">
+                <i class="fas fa-user nav-icon"></i>
+                <span class="nav-label">Profile</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Settings</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Dark Mode</div>
+                    <div class="setting-desc">Switch between light and dark themes</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="dark-mode-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Vibration</div>
+                    <div class="setting-desc">Haptic feedback when counting</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="vibration-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Sound</div>
+                    <div class="setting-desc">Play sound when completing dhikr</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sound-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Daily Goal</div>
+                    <div class="setting-desc">Set your daily dhikr target</div>
+                </div>
+                <button class="btn btn-outline">100</button>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Language</div>
+                    <div class="setting-desc">Change app language</div>
+                </div>
+                <button class="btn btn-outline">English</button>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Reset Data</div>
+                    <div class="setting-desc">Clear all your progress</div>
+                </div>
+                <button class="btn btn-outline">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration Modal -->
+    <div class="celebration" id="celebration">
+        <i class="fas fa-star"></i>
+        <h2>Masha'Allah!</h2>
+        <p>You've completed your dhikr</p>
+        <button class="btn btn-primary" id="close-celebration">Continue</button>
+    </div>
+
+    <script>
+        // App State
+        const state = {
+            count: 0,
+            target: 33,
+            currentDhikr: {
+                arabic: "سُبْحَانَ اللَّهِ",
+                translation: "Glory be to Allah",
+                recommendedCount: 33
+            },
+            darkMode: false,
+            vibrationEnabled: true,
+            soundEnabled: true,
+            todayCount: 0,
+            streak: 0,
+            totalCount: 0,
+            goal: 100
+        };
+
+        // DOM Elements
+        const counterBtn = document.getElementById('counter-btn');
+        const countDisplay = document.getElementById('count');
+        const resetBtn = document.getElementById('reset-btn');
+        const changeDhikrBtn = document.getElementById('change-dhikr-btn');
+        const themeToggle = document.getElementById('theme-toggle');
+        const settingsToggle = document.getElementById('settings-toggle');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const vibrationToggle = document.getElementById('vibration-toggle');
+        const soundToggle = document.getElementById('sound-toggle');
+        const celebration = document.getElementById('celebration');
+        const closeCelebration = document.getElementById('close-celebration');
+        const navItems = document.querySelectorAll('.nav-item');
+        const screens = document.querySelectorAll('.screen');
+        
+        // Sample Azkar Data
+        const azkarData = [
+            {
+                id: 1,
+                arabic: "سُبْحَانَ اللَّهِ",
+                translation: "Glory be to Allah",
+                category: "general",
+                recommendedCount: 33
+            },
+            {
+                id: 2,
+                arabic: "الْحَمْدُ لِلَّهِ",
+                translation: "Praise be to Allah",
+                category: "general",
+                recommendedCount: 33
+            },
+            {
+                id: 3,
+                arabic: "اللَّهُ أَكْبَرُ",
+                translation: "Allah is the Greatest",
+                category: "general",
+                recommendedCount: 34
+            },
+            {
+                id: 4,
+                arabic: "لَا إِلَهَ إِلَّا اللَّهُ",
+                translation: "There is no god but Allah",
+                category: "general",
+                recommendedCount: 100
+            },
+            {
+                id: 5,
+                arabic: "أَسْتَغْفِرُ اللَّهَ",
+                translation: "I seek forgiveness from Allah",
+                category: "general",
+                recommendedCount: 100
+            },
+            {
+                id: 6,
+                arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+                translation: "Glory and praise be to Allah",
+                category: "morning",
+                recommendedCount: 100
+            }
+        ];
+
+        // Initialize the app
+        function init() {
+            loadState();
+            renderAzkarList();
+            renderAchievements();
+            setupEventListeners();
+            updateStats();
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            const savedState = localStorage.getItem('azkarProState');
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                Object.assign(state, parsedState);
+            }
+            
+            // Update UI based on loaded state
+            countDisplay.textContent = state.count;
+            updateDhikrDisplay();
+            
+            // Set dark mode if enabled
+            if (state.darkMode) {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.checked = true;
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
+            // Set toggles
+            vibrationToggle.checked = state.vibrationEnabled;
+            soundToggle.checked = state.soundEnabled;
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('azkarProState', JSON.stringify(state));
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Counter button
+            counterBtn.addEventListener('click', incrementCount);
+            
+            // Reset button
+            resetBtn.addEventListener('click', resetCount);
+            
+            // Change dhikr button
+            changeDhikrBtn.addEventListener('click', () => {
+                switchScreen('library-screen');
+            });
+            
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Settings modal
+            settingsToggle.addEventListener('click', () => {
+                settingsModal.classList.add('active');
+            });
+            
+            closeModalBtn.addEventListener('click', () => {
+                settingsModal.classList.remove('active');
+            });
+            
+            // Settings toggles
+            darkModeToggle.addEventListener('change', toggleDarkMode);
+            vibrationToggle.addEventListener('change', () => {
+                state.vibrationEnabled = vibrationToggle.checked;
+                saveState();
+            });
+            
+            soundToggle.addEventListener('change', () => {
+                state.soundEnabled = soundToggle.checked;
+                saveState();
+            });
+            
+            // Celebration close
+            closeCelebration.addEventListener('click', () => {
+                celebration.classList.remove('active');
+            });
+            
+            // Navigation
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const screenId = item.getAttribute('data-screen');
+                    switchScreen(screenId);
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+            
+            // Close modal when clicking outside
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    settingsModal.classList.remove('active');
+                }
+            });
+        }
+
+        // Switch between screens
+        function switchScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Increment count
+        function incrementCount() {
+            state.count++;
+            state.todayCount++;
+            state.totalCount++;
+            countDisplay.textContent = state.count;
+            
+            // Check if target reached
+            if (state.count >= state.target) {
+                showCelebration();
+            }
+            
+            // Vibrate if enabled
+            if (state.vibrationEnabled && navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+            
+            updateStats();
+            saveState();
+        }
+
+        // Reset count
+        function resetCount() {
+            state.count = 0;
+            countDisplay.textContent = state.count;
+            saveState();
+        }
+
+        // Update dhikr display
+        function updateDhikrDisplay() {
+            const arabicElement = document.querySelector('.dhikr-arabic');
+            const translationElement = document.querySelector('.dhikr-translation');
+            
+            if (arabicElement && translationElement) {
+                arabicElement.textContent = state.currentDhikr.arabic;
+                translationElement.textContent = state.currentDhikr.translation;
+                state.target = state.currentDhikr.recommendedCount;
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            state.darkMode = !state.darkMode;
+            document.body.classList.toggle('dark-mode');
+            
+            if (state.darkMode) {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            
+            darkModeToggle.checked = state.darkMode;
+            saveState();
+        }
+
+        // Toggle dark mode from settings
+        function toggleDarkMode() {
+            state.darkMode = darkModeToggle.checked;
+            document.body.classList.toggle('dark-mode', state.darkMode);
+            
+            if (state.darkMode) {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            
+            saveState();
+        }
+
+        // Show celebration when target reached
+        function showCelebration() {
+            if (state.soundEnabled) {
+                // Play completion sound (in a real app, we would use the Web Audio API)
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dyvm0iBziN1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dyvm0iBziN1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dyvm0iBziN1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dyvm0iBw==');
+                    audio.volume = 0.3;
+                    audio.play();
+                } catch (e) {
+                    console.log("Audio playback failed:", e);
+                }
+            }
+            
+            celebration.classList.add('active');
+        }
+
+        // Render azkar list
+        function renderAzkarList() {
+            const azkarList = document.querySelector('.azkar-list');
+            azkarList.innerHTML = '';
+            
+            azkarData.forEach(azkar => {
+                const card = document.createElement('div');
+                card.className = 'azkar-card';
+                card.innerHTML = `
+                    <div class="azkar-card-header">
+                        <div class="azkar-card-arabic">${azkar.arabic}</div>
+                        <i class="far fa-heart"></i>
+                    </div>
+                    <div class="azkar-card-translation">${azkar.translation}</div>
+                    <div class="azkar-card-footer">
+                        <div class="recommended-count">
+                            <i class="fas fa-bullseye"></i>
+                            <span>${azkar.recommendedCount} times</span>
+                        </div>
+                        <button class="btn btn-primary use-dhikr-btn" data-id="${azkar.id}">
+                            Use
+                        </button>
+                    </div>
+                `;
+                
+                azkarList.appendChild(card);
+            });
+            
+            // Add event listeners to "Use" buttons
+            document.querySelectorAll('.use-dhikr-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    const azkar = azkarData.find(a => a.id === id);
+                    
+                    if (azkar) {
+                        state.currentDhikr = azkar;
+                        state.count = 0;
+                        updateDhikrDisplay();
+                        countDisplay.textContent = state.count;
+                        switchScreen('counter-screen');
+                        
+                        // Update active nav item
+                        navItems.forEach(nav => nav.classList.remove('active'));
+                        document.querySelector('[data-screen="counter-screen"]').classList.add('active');
+                        
+                        saveState();
+                    }
+                });
+            });
+        }
+
+        // Render achievements
+        function renderAchievements() {
+            const badgesContainer = document.querySelector('.badges-container');
+            const achievements = [
+                { name: "First Dhikr", icon: "fas fa-star", achieved: true },
+                { name: "7-Day Streak", icon: "fas fa-fire", achieved: true },
+                { name: "100 Counts", icon: "fas fa-trophy", achieved: false },
+                { name: "5 Dhikr Types", icon: "fas fa-book", achieved: false },
+                { name: "Early Bird", icon: "fas fa-sun", achieved: true }
+            ];
+            
+            badgesContainer.innerHTML = '';
+            
+            achievements.forEach(achievement => {
+                const badge = document.createElement('div');
+                badge.className = 'badge';
+                badge.innerHTML = `
+                    <div class="badge-icon ${achievement.achieved ? '' : 'locked'}">
+                        <i class="${achievement.icon}"></i>
+                    </div>
+                    <div class="badge-name">${achievement.name}</div>
+                `;
+                
+                if (!achievement.achieved) {
+                    badge.style.opacity = '0.5';
+                }
+                
+                badgesContainer.appendChild(badge);
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('today-count').textContent = state.todayCount;
+            document.getElementById('streak-count').textContent = state.streak;
+            document.getElementById('total-count').textContent = state.totalCount;
+            
+            const goalProgress = Math.min(Math.round((state.todayCount / state.goal) * 100), 100);
+            document.getElementById('goal-progress').textContent = `${goalProgress}%`;
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
